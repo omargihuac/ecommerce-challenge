@@ -100,7 +100,8 @@ public class ProductService {
     private void validateSkuIsAvailable(String sku, Long currentProductId) {
         productRepository.findBySku(sku.trim())
             .filter(product ->
-                !product.getId().equals(currentProductId))
+                currentProductId == null
+                || !product.getId().equals(currentProductId))
             .ifPresent(product -> {
                 throw new DuplicateProductSkuException(
                     "Ya existe un producto con el SKU: " + sku

@@ -30,6 +30,7 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/error").permitAll()
                 .requestMatchers(
                     org.springframework.http.HttpMethod.GET,
                     "/api/products",
