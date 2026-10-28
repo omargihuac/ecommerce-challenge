@@ -45,6 +45,20 @@ public class Product {
     protected Product() {
     }
 
+    public Product(
+        String name,
+        String description,
+        String sku,
+        BigDecimal price,
+        Integer stockQuantity) {
+            this.name = name;
+            this.description = description;
+            this.sku = sku;
+            this.price = price;
+            this.stockQuantity = stockQuantity;
+            this.active = true;
+        }
+
     public Long getId() {
         return id;
     }

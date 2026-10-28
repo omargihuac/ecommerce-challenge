@@ -28,6 +28,23 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers(
+                    org.springframework.http.HttpMethod.GET,
+                    "/api/products",
+                    "/api/products/*"
+                ).permitAll()
+                .requestMatchers(
+                    org.springframework.http.HttpMethod.POST,
+                    "/api/products"
+                ).hasRole("ADMIN")
+                .requestMatchers(
+                    org.springframework.http.HttpMethod.PUT,
+                    "/api/products/*"
+                ).hasRole("ADMIN")
+                .requestMatchers(
+                    org.springframework.http.HttpMethod.DELETE,
+                    "/api/products/*"
+                ).hasRole("ADMIN")
                 .anyRequest().authenticated())
             .httpBasic(Customizer.withDefaults());
 
