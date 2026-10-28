@@ -48,6 +48,24 @@ public class Promotion {
 
     protected Promotion() {
     }
+    
+    public static Promotion create(
+            String name,
+            String description,
+            BigDecimal discountPercentage,
+            OffsetDateTime startsAt,
+            OffsetDateTime endsAt) {
+
+        Promotion promotion = new Promotion();
+        promotion.name = name;
+        promotion.description = description;
+        promotion.discountPercentage = discountPercentage;
+        promotion.startsAt = startsAt;
+        promotion.endsAt = endsAt;
+        promotion.enabled = true;
+
+        return promotion;
+    }
 
     public Long getId() { return id; }
     public String getName() { return name; }

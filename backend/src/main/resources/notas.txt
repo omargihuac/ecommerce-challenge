@@ -1,0 +1,28 @@
+En la Implementacion de PromotionService.java hice:
+
+- Consultar promociones habilitadas.
+- Crear promociones con validación del nombre, porcentaje y fechas.
+- Actualizar los datos de una promoción existente.
+- Deshabilitar una promoción sin eliminarla de la base de datos.
+
+para el siguiente commit:
+usar el DTO, validar los datos, crear y actualizar entidades, y conservar la desactivación lógica.
+PromotionController.java está correctamente integrado con PromotionService, PromotionRequest
+CRUD de promociones
+
+
+En promotion.java
+Este método de fábrica:
+- Centraliza la creación de promociones.
+- Las crea habilitadas por defecto.
+- Conserva el constructor protegido que utiliza JPA.
+- No asigna createdBy todavía; lo integraremos cuando conectemos la promoción con el usuario autenticado.
+
+
+ PromotionController.java habilita:
+Método	Endpoint	Función
+GET	/api/promotions	Consultar promociones habilitadas
+GET	/api/promotions/{id}	Consultar una promoción por ID
+POST	/api/promotions	Crear una promoción
+PUT	/api/promotions/{id}	Actualizar una promoción
+DELETE	/api/promotions/{id}	Deshabilitar una promoción

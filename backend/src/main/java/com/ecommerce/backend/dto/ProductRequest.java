@@ -10,13 +10,13 @@ import jakarta.validation.constraints.Size;
 
 public record ProductRequest (
     @NotBlank(message = "El nombre es obligatorio")
-    @Size(max = 150, message = "El nombre no puede superar 30 caracteres")
+    @Size(max = 30, message = "El nombre no puede superar 30 caracteres")
     String name,
 
     String description,
 
     @NotBlank(message = "El SKU es obligatorio")
-    @Size(max = 80, message = "El SKU no puede superar 10 caracteres")
+    @Size(max = 10, message = "El SKU no puede superar 10 caracteres")
     String sku,
 
     @NotNull(message = "El precio es obligatorio")
