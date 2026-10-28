@@ -53,6 +53,13 @@ public class User {
     protected User() {
     }
 
+    public User(String fullName, String email, String passwordHash) {
+        this.fullName = fullName;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.enabled = true;
+    }
+
     public Long getId() {
         return id;
     }
