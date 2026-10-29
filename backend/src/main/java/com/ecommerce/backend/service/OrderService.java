@@ -47,7 +47,8 @@ public class OrderService {
     @Transactional
     public PurchaseOrder createOrder(
             Authentication authentication,
-            List<OrderItemRequest> requestedItems) {
+            List<OrderItemRequest> requestedItems,
+            boolean randomSelection) {
 
         if (requestedItems == null || requestedItems.isEmpty()) {
             throw new IllegalArgumentException(
@@ -65,14 +66,16 @@ public class OrderService {
         
         List<Promotion> activePromotions = getActivePromotions();
 
-        BigDecimal mainDiscountPercentage =
-            getMainDiscountPercentage(activePromotions);
+        boolean applyRandomDiscount =
+            randomSelection && !activePromotions.isEmpty();
+
+        BigDecimal mainDiscountPercentage = activePromotions.isEmpty()
+            ? BigDecimal.ZERO
+            : applyRandomDiscount
+                ? new BigDecimal("50")
+                : getRegularDiscountPercentage(activePromotions);
 
         boolean frequentCustomer = isFrequentCustomer(customer.getId());
-
-        boolean randomSelection =
-            !activePromotions.isEmpty()
-                && mainDiscountPercentage.compareTo(new BigDecimal("50")) == 0;
 
         BigDecimal subtotal = BigDecimal.ZERO;
 
@@ -126,16 +129,6 @@ public class OrderService {
                     discountType,
                     mainDiscountPercentage,
                     description
-                );
-            }
-
-
-            if (mainDiscountPercentage.compareTo(BigDecimal.ZERO) > 0) {
-                itemDiscount = applyDiscount(
-                    item,
-                    OrderItemDiscount.DiscountType.PROMOTION,
-                    mainDiscountPercentage,
-                    "Descuento por promoción vigente"
                 );
             }
             
@@ -219,11 +212,9 @@ public class OrderService {
     }
 
     private BigDecimal getRegularDiscountPercentage(List<Promotion> promotions) {
-        return promotions.stream()
-            .map(Promotion::getDiscountPercentage)
-            .filter(percentage -> percentage != null)
-            .max(BigDecimal::compareTo)
-            .orElse(BigDecimal.ZERO);
+        return promotions.isEmpty()
+            ? BigDecimal.ZERO
+            : new BigDecimal("10");
     }
 
     /** Metodo que permite calcular y registrar un descuento sobre un 

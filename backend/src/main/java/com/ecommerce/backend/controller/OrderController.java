@@ -32,7 +32,8 @@ public class OrderController {
 
         PurchaseOrder order = orderService.createOrder(
             authentication,
-            request.items()
+            request.items(),
+            Boolean.TRUE.equals(request.randomSelection())
         );
 
         return orderService.toResponse(order);
