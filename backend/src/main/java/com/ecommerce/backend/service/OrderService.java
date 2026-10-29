@@ -68,6 +68,8 @@ public class OrderService {
         BigDecimal mainDiscountPercentage =
             getMainDiscountPercentage(activePromotions);
 
+        boolean frequentCustomer = isFrequentCustomer(customer.getId());
+
         boolean randomSelection =
             !activePromotions.isEmpty()
                 && mainDiscountPercentage.compareTo(new BigDecimal("50")) == 0;
@@ -136,9 +138,32 @@ public class OrderService {
                     "Descuento por promoción vigente"
                 );
             }
+            
+            BigDecimal frequentCustomerDiscount = BigDecimal.ZERO;
 
-            item.setDiscountTotal(itemDiscount);
-            item.setTotal(itemSubtotal.subtract(itemDiscount));
+            if (frequentCustomer) {
+                BigDecimal remainingAmount = itemSubtotal.subtract(itemDiscount);
+
+                if (remainingAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    frequentCustomerDiscount = remainingAmount
+                        .multiply(new BigDecimal("5"))
+                        .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+
+                    if (frequentCustomerDiscount.compareTo(BigDecimal.ZERO) > 0) {
+                        OrderItemDiscount frequentDiscount = OrderItemDiscount.create(
+                            OrderItemDiscount.DiscountType.FREQUENT_CUSTOMER,
+                            new BigDecimal("5"),
+                            frequentCustomerDiscount,
+                            "Descuento adicional por cliente frecuente"
+                        );
+
+                        item.addDiscount(frequentDiscount);
+                    }
+                }
+            }
+
+            item.setDiscountTotal(itemDiscount.add(frequentCustomerDiscount));
+            item.setTotal(itemSubtotal.subtract(item.getDiscountTotal()));
 
             order.addItem(item);
             subtotal = subtotal.add(itemSubtotal);
@@ -172,6 +197,13 @@ public class OrderService {
     
     private boolean isRandomSelection() {
         return ThreadLocalRandom.current().nextBoolean();
+    }
+    
+    private boolean isFrequentCustomer(Long customerId) {
+        return orderRepository.countByCustomerIdAndStatus(
+            customerId,
+            PurchaseOrder.Status.COMPLETED
+        ) >= 5;
     }
     
     private BigDecimal getMainDiscountPercentage(List<Promotion> promotions) {
