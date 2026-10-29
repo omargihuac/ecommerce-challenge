@@ -102,6 +102,12 @@ public class OrderService {
                 );
             }
 
+            product.setStockQuantity(
+                product.getStockQuantity() - requestedItem.quantity()
+            );
+
+            productRepository.save(product);
+
             BigDecimal itemSubtotal = product.getPrice()
                 .multiply(BigDecimal.valueOf(requestedItem.quantity()));
 
@@ -285,4 +291,20 @@ public class OrderService {
             items
         );
     }
+    
+    @Transactional(readOnly = true)
+    public List<PurchaseOrderResponse> getMyOrders(Authentication authentication) {
+        User customer = userRepository
+            .findByEmailIgnoreCase(authentication.getName())
+            .orElseThrow(() -> new IllegalArgumentException(
+                "No se encontró el usuario autenticado"
+            ));
+
+        return orderRepository
+            .findByCustomerIdOrderByCreatedAtDesc(customer.getId())
+            .stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
 }
