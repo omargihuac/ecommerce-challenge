@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
@@ -67,6 +68,10 @@ public class OrderService {
         BigDecimal mainDiscountPercentage =
             getMainDiscountPercentage(activePromotions);
 
+        boolean randomSelection =
+            !activePromotions.isEmpty()
+                && mainDiscountPercentage.compareTo(new BigDecimal("50")) == 0;
+
         BigDecimal subtotal = BigDecimal.ZERO;
 
         for (OrderItemRequest requestedItem : requestedItems) {
@@ -102,7 +107,26 @@ public class OrderService {
             item.setUnitPrice(product.getPrice());
             item.setSubtotal(itemSubtotal);
             
+            
             BigDecimal itemDiscount = BigDecimal.ZERO;
+
+            if (mainDiscountPercentage.compareTo(BigDecimal.ZERO) > 0) {
+                OrderItemDiscount.DiscountType discountType = randomSelection
+                    ? OrderItemDiscount.DiscountType.RANDOM_SELECTION
+                    : OrderItemDiscount.DiscountType.PROMOTION;
+
+                String description = randomSelection
+                    ? "Descuento por selección aleatoria"
+                    : "Descuento por promoción vigente";
+
+                itemDiscount = applyDiscount(
+                    item,
+                    discountType,
+                    mainDiscountPercentage,
+                    description
+                );
+            }
+
 
             if (mainDiscountPercentage.compareTo(BigDecimal.ZERO) > 0) {
                 itemDiscount = applyDiscount(
@@ -136,7 +160,7 @@ public class OrderService {
         Integer quantity
     ) {}
 
-    private List<com.ecommerce.backend.entity.Promotion> getActivePromotions() {
+    private List<Promotion> getActivePromotions() {
         OffsetDateTime now = OffsetDateTime.now();
 
         return promotionRepository
@@ -146,14 +170,23 @@ public class OrderService {
             );
     }
     
-    /**
-     * metodo que obtiene el mayor porcentaje entre las promociones vigentes
-     */
+    private boolean isRandomSelection() {
+        return ThreadLocalRandom.current().nextBoolean();
+    }
+    
     private BigDecimal getMainDiscountPercentage(List<Promotion> promotions) {
         if (promotions == null || promotions.isEmpty()) {
             return BigDecimal.ZERO;
         }
 
+        if (isRandomSelection()) {
+            return new BigDecimal("50");
+        }
+
+        return getRegularDiscountPercentage(promotions);
+    }
+
+    private BigDecimal getRegularDiscountPercentage(List<Promotion> promotions) {
         return promotions.stream()
             .map(Promotion::getDiscountPercentage)
             .filter(percentage -> percentage != null)
