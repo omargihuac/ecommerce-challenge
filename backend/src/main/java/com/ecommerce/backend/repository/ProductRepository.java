@@ -13,4 +13,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     boolean existsBySku(String sku);
 
     List<Product> findByActiveTrueOrderByNameAsc();
+
+    List<Product> findByActiveTrue();
 }

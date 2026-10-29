@@ -69,6 +69,12 @@ public class PurchaseOrder {
     protected PurchaseOrder() {
     }
 
+    public static PurchaseOrder create(User customer) {
+        PurchaseOrder order = new PurchaseOrder();
+        order.setCustomer(customer);
+        return order;
+    }
+
     public void addItem(OrderItem item) {
         items.add(item);
         item.setOrder(this);

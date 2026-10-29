@@ -26,3 +26,16 @@ GET	/api/promotions/{id}	Consultar una promoción por ID
 POST	/api/promotions	Crear una promoción
 PUT	/api/promotions/{id}	Actualizar una promoción
 DELETE	/api/promotions/{id}	Deshabilitar una promoción
+
+/* metodo que permitirá buscar las promociones que estén habilitadas, que ya hayan comenzado y que todavía no hayan terminado. */
+List<Promotion> findByEnabledTrueAndStartsAtLessThanEqualAndEndsAtGreaterThan(
+    java.time.OffsetDateTime nowForStart,
+    java.time.OffsetDateTime nowForEnd
+);
+
+La clase ProductCatalogController.java es un controlador independiente para
+ conectar el servicio del catálogo con un endpoint, sin modificar el 
+ CRUD de productos
+
+ OrderService.java preparada para crear pedidos, asociarlos al usuario autenticado y validar productos, cantidades y stock.
+ DTO CreateOrderREquest.java para recibir pedidos

@@ -60,6 +60,10 @@ public class OrderItem {
     protected OrderItem() {
     }
 
+    public static OrderItem create() {
+        return new OrderItem();
+    }
+
     public void addDiscount(OrderItemDiscount discount) {
         discounts.add(discount);
         discount.setOrderItem(this);

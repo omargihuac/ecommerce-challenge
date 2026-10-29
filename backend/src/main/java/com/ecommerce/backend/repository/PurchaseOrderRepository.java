@@ -13,4 +13,9 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Lo
     List<PurchaseOrder> findByStatusOrderByCreatedAtDesc(
         PurchaseOrder.Status status
     );
+
+    long countByCustomerIdAndStatus(
+        Long customerId,
+        PurchaseOrder.Status status
+    );
 }
