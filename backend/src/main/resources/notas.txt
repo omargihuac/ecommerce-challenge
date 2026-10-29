@@ -39,3 +39,19 @@ La clase ProductCatalogController.java es un controlador independiente para
 
  OrderService.java preparada para crear pedidos, asociarlos al usuario autenticado y validar productos, cantidades y stock.
  DTO CreateOrderREquest.java para recibir pedidos
+
+ commit: create ORDER for:
+ permite crear un pedido.
+
+
+
+Utiliza el usuario autenticado para asociarlo al cliente correcto.
+
+
+
+Responde con 201 Created cuando la creación termina correctamente.
+
+
+next commit:
+implement OrderItemDiscount in OrderItemDiscount for create discounts with type
+percent, calue and description

@@ -50,6 +50,26 @@ public class OrderItemDiscount {
     protected OrderItemDiscount() {
     }
 
+    /** 
+     * metodo de regla de negocio: descuento que permitirá calcular 
+     * los valores monetarios con dos decimales y registrar los 
+     * descuentos aplicados a cada artículo.
+    */
+    public static OrderItemDiscount create(
+            DiscountType discountType,
+            BigDecimal percentage,
+            BigDecimal amount,
+            String description) {
+
+        OrderItemDiscount discount = new OrderItemDiscount();
+        discount.discountType = discountType;
+        discount.percentage = percentage;
+        discount.amount = amount;
+        discount.description = description;
+
+        return discount;
+    }
+
     public Long getId() { return id; }
     public OrderItem getOrderItem() { return orderItem; }
     public void setOrderItem(OrderItem item) { this.orderItem = item; }

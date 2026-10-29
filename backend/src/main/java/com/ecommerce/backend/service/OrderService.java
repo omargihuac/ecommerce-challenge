@@ -2,6 +2,8 @@
 package com.ecommerce.backend.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -12,10 +14,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ecommerce.backend.dto.OrderItemResponse;
 import com.ecommerce.backend.dto.PurchaseOrderResponse;
 import com.ecommerce.backend.entity.OrderItem;
+import com.ecommerce.backend.entity.OrderItemDiscount;
 import com.ecommerce.backend.entity.Product;
+import com.ecommerce.backend.entity.Promotion;
 import com.ecommerce.backend.entity.PurchaseOrder;
 import com.ecommerce.backend.entity.User;
 import com.ecommerce.backend.repository.ProductRepository;
+import com.ecommerce.backend.repository.PromotionRepository;
 import com.ecommerce.backend.repository.PurchaseOrderRepository;
 import com.ecommerce.backend.repository.UserRepository;
 
@@ -25,14 +30,17 @@ public class OrderService {
     private final PurchaseOrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
-
+    private final PromotionRepository promotionRepository;
+    
     public OrderService(
             PurchaseOrderRepository orderRepository,
             ProductRepository productRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            PromotionRepository promotionRepository) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
+        this.promotionRepository = promotionRepository;
     }
 
     @Transactional
@@ -53,6 +61,11 @@ public class OrderService {
             ));
 
         PurchaseOrder order = PurchaseOrder.create(customer);
+        
+        List<Promotion> activePromotions = getActivePromotions();
+
+        BigDecimal mainDiscountPercentage =
+            getMainDiscountPercentage(activePromotions);
 
         BigDecimal subtotal = BigDecimal.ZERO;
 
@@ -88,16 +101,32 @@ public class OrderService {
             item.setQuantity(requestedItem.quantity());
             item.setUnitPrice(product.getPrice());
             item.setSubtotal(itemSubtotal);
-            item.setDiscountTotal(BigDecimal.ZERO);
-            item.setTotal(itemSubtotal);
+            
+            BigDecimal itemDiscount = BigDecimal.ZERO;
+
+            if (mainDiscountPercentage.compareTo(BigDecimal.ZERO) > 0) {
+                itemDiscount = applyDiscount(
+                    item,
+                    OrderItemDiscount.DiscountType.PROMOTION,
+                    mainDiscountPercentage,
+                    "Descuento por promoción vigente"
+                );
+            }
+
+            item.setDiscountTotal(itemDiscount);
+            item.setTotal(itemSubtotal.subtract(itemDiscount));
 
             order.addItem(item);
             subtotal = subtotal.add(itemSubtotal);
         }
 
+        BigDecimal totalDiscount = order.getItems().stream()
+            .map(OrderItem::getDiscountTotal)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         order.setSubtotal(subtotal);
-        order.setDiscountTotal(BigDecimal.ZERO);
-        order.setTotal(subtotal);
+        order.setDiscountTotal(totalDiscount);
+        order.setTotal(subtotal.subtract(totalDiscount));
 
         return orderRepository.save(order);
     }
@@ -106,6 +135,61 @@ public class OrderService {
         Long productId,
         Integer quantity
     ) {}
+
+    private List<com.ecommerce.backend.entity.Promotion> getActivePromotions() {
+        OffsetDateTime now = OffsetDateTime.now();
+
+        return promotionRepository
+            .findByEnabledTrueAndStartsAtLessThanEqualAndEndsAtGreaterThan(
+                now,
+                now
+            );
+    }
+    
+    /**
+     * metodo que obtiene el mayor porcentaje entre las promociones vigentes
+     */
+    private BigDecimal getMainDiscountPercentage(List<Promotion> promotions) {
+        if (promotions == null || promotions.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        return promotions.stream()
+            .map(Promotion::getDiscountPercentage)
+            .filter(percentage -> percentage != null)
+            .max(BigDecimal::compareTo)
+            .orElse(BigDecimal.ZERO);
+    }
+
+    /** Metodo que permite calcular y registrar un descuento sobre un 
+     * articulo del pedido realizado
+    */
+    private BigDecimal applyDiscount(
+            OrderItem item,
+            OrderItemDiscount.DiscountType type,
+            BigDecimal percentage,
+            String description) {
+
+        BigDecimal amount = item.getSubtotal()
+            .multiply(percentage)
+            .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        OrderItemDiscount discount = OrderItemDiscount.create(
+            type,
+            percentage,
+            amount,
+            description
+        );
+
+        item.addDiscount(discount);
+
+        return amount;
+    }
+
 
     public PurchaseOrderResponse toResponse(PurchaseOrder order) {
         List<OrderItemResponse> items = order.getItems().stream()
