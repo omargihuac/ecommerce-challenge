@@ -116,7 +116,7 @@ public class OrderService {
             BigDecimal itemDiscount = BigDecimal.ZERO;
 
             if (mainDiscountPercentage.compareTo(BigDecimal.ZERO) > 0) {
-                OrderItemDiscount.DiscountType discountType = randomSelection
+                OrderItemDiscount.DiscountType discountType = applyRandomDiscount
                     ? OrderItemDiscount.DiscountType.RANDOM_SELECTION
                     : OrderItemDiscount.DiscountType.PROMOTION;
 
@@ -171,6 +171,20 @@ public class OrderService {
         order.setTotal(subtotal.subtract(totalDiscount));
 
         return orderRepository.save(order);
+    }
+
+    @Transactional
+    public PurchaseOrderResponse completeOrder(Long orderId) {
+        PurchaseOrder order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new IllegalArgumentException(
+                "Pedido no encontrado: " + orderId
+            ));
+
+        order.complete();
+
+        orderRepository.save(order);
+
+        return toResponse(order);
     }
 
     public record OrderItemRequest(
@@ -246,7 +260,7 @@ public class OrderService {
         return amount;
     }
 
-
+    @Transactional
     public PurchaseOrderResponse toResponse(PurchaseOrder order) {
         List<OrderItemResponse> items = order.getItems().stream()
             .map(item -> new OrderItemResponse(

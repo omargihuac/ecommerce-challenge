@@ -85,6 +85,17 @@ public class PurchaseOrder {
         item.setOrder(null);
     }
 
+    public void complete() {
+        if (this.status != Status.PENDING) {
+            throw new IllegalStateException(
+                "Solo se pueden completar pedidos pendientes"
+            );
+        }
+
+        this.status = Status.COMPLETED;
+        this.completedAt = OffsetDateTime.now();
+    }
+
     public Long getId() { return id; }
     public User getCustomer() { return customer; }
     public void setCustomer(User customer) { this.customer = customer; }
